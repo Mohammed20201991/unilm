@@ -11,7 +11,6 @@ from fairseq.models.transformer import TransformerConfig
 
 
 
-
 class UniLMMultiheadAttention(MultiheadAttention):
     def __init__(self, embed_dim, num_heads, kdim=None, vdim=None, dropout=0, bias=True, add_bias_kv=False, add_zero_attn=False, self_attention=False, encoder_decoder_attention=False, q_noise=0, qn_block_size=8):
         super().__init__(embed_dim, num_heads, kdim=kdim, vdim=vdim, dropout=dropout, bias=bias, add_bias_kv=add_bias_kv, add_zero_attn=add_zero_attn, self_attention=self_attention, encoder_decoder_attention=encoder_decoder_attention, q_noise=q_noise, qn_block_size=qn_block_size)  
@@ -43,7 +42,7 @@ class UniLMDecoderBase(TransformerDecoderBase):
             layer = checkpoint_wrapper(layer, offload_to_cpu=offload_to_cpu)
         # if we are checkpointing, enforce that FSDP always wraps the
         # checkpointed layer, regardless of layer size
-        min_params_to_wrap = cfg.min_params_to_wrap if not checkpoint else 0
+        min_params_to_wrap = 0 if checkpoint else cfg.min_params_to_wrap
         layer = fsdp_wrap(layer, min_num_params=min_params_to_wrap)
         return layer
 

@@ -247,8 +247,9 @@ class Receipt53KDataset(FairseqDataset):
         try:
             image = Image.open(img_dict['img_path']).convert('RGB')
         except Exception as e:
-            logger.warning('Failed to load image: {}, since {}'.format(img_dict['img_path'], str(e)))
-            return None    
+            logger.warning(f"Failed to load image: {img_dict['img_path']}, since {str(e)}")
+            return None   
+            
         encoded_str = self.bpe_parser.encode(img_dict['text'])
         input_ids = self.target_dict.encode_line(encoded_str, add_if_not_exist=False)
 

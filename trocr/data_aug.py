@@ -44,7 +44,8 @@ class ResizePad(object):
         old_size = im.size  # old_size[0] is in (width, height) format
 
         ratio = float(self.imgH)/old_size[1]
-        new_size = tuple([int(x*ratio) for x in old_size])
+        # new_size = tuple([int(x*ratio) for x in old_size])
+        new_size = tuple(int(x*ratio) for x in old_size)
         im = im.resize(new_size, Image.BICUBIC)
 
         new_im = Image.new("RGB", (self.imgW, self.imgH))

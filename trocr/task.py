@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/ngyongyossy/mohammad/unilm/trocr/')
 import os
 from fairseq import search
 
@@ -80,7 +82,7 @@ class TextRecognitionTask(LegacyFairseqTask):
 
         if getattr(args, "dict_path_or_url", None) is not None:
             if args.dict_path_or_url.startswith('http'):
-                logger.info('Load dictionary from {}'.format(args.dict_path_or_url))  
+                logger.info(f'Load dictionary from {args.dict_path_or_url}')
                 dict_content = urllib.request.urlopen(args.dict_path_or_url).read().decode()
                 dict_file_like = io.StringIO(dict_content)
                 target_dict = Dictionary.load(dict_file_like)
@@ -88,23 +90,23 @@ class TextRecognitionTask(LegacyFairseqTask):
                 target_dict = Dictionary.load(args.dict_path_or_url)      
         elif getattr(args, "decoder_pretrained", None) is not None:
             if args.decoder_pretrained == 'unilm':            
-                url = 'https://layoutlm.blob.core.windows.net/trocr/dictionaries/unilm3.dict.txt'
-                logger.info('Load unilm dictionary from {}'.format(url))            
+                url = 'https://layoutlm.blob.core.windows.net/trocr/dictionaries/unilm3.dict.txt'   
+                logger.info(f'Load unilm dictionary from {url}')        
                 dict_content = urllib.request.urlopen(url).read().decode()
                 dict_file_like = io.StringIO(dict_content)
                 target_dict = Dictionary.load(dict_file_like)
             elif args.decoder_pretrained.startswith('roberta'):
                 url = 'https://layoutlm.blob.core.windows.net/trocr/dictionaries/gpt2_with_mask.dict.txt'
-                logger.info('Load gpt2 dictionary from {}'.format(url))            
+                logger.info(f'Load gpt2 dictionary from {url}')           
                 dict_content = urllib.request.urlopen(url).read().decode()
                 dict_file_like = io.StringIO(dict_content)
                 target_dict = Dictionary.load(dict_file_like)
             else:
-                raise ValueError('Unknown decoder_pretrained: {}'.format(args.decoder_pretrained))
+                raise ValueError(f'Unknown decoder_pretrained: {args.decoder_pretrained}')
         else:
-            raise ValueError('Either dict_path_or_url or decoder_pretrained should be set.')
+            raise ValueError('Either dict_path_or_url Or decoder_pretrained should be set.')
           
-        logger.info('[label] load dictionary: {} types'.format(len(target_dict)))
+        logger.info(f'[label] load dictionary: {len(target_dict)} types')
 
         return cls(args, target_dict)
 
@@ -125,13 +127,15 @@ class TextRecognitionTask(LegacyFairseqTask):
         input_size = self.args.input_size         
         if isinstance(input_size, list):
             if len(input_size) == 1:
-                input_size = (input_size[0], input_size[0])
+                input_size = (input_size[0], input_size[0]) # h *w (input_size =384  =>> 384 * 384 )
             else:
                 input_size = tuple(input_size)
         elif isinstance(input_size, int):
             input_size = (input_size, input_size)
 
-        logger.info('The input size is {}, the height is {} and the width is {}'.format(input_size, input_size[0], input_size[1]))
+        logger.info(
+            f'The input size is {input_size}, the height is {input_size[0]} and the width is {input_size[1]}'
+        )
 
         if self.args.preprocess == 'DA2':            
             tfm = build_data_aug(input_size, mode=split)     
@@ -139,20 +143,22 @@ class TextRecognitionTask(LegacyFairseqTask):
             opt = OptForDataAugment(eval= (split != 'train'), isrand_aug=True, imgW=input_size[1], imgH=input_size[0], intact_prob=0.5, augs_num=3, augs_mag=None)
             tfm = DataAugment(opt)
         else:
-            raise Exception('Undeined image preprocess method.')        
+            raise Exception('Undefined image preprocess method.')        
         
         # load the dataset
         if self.args.data_type == 'SROIE':
             root_dir = os.path.join(self.data_dir, split)
             self.datasets[split] = SROIETextRecognitionDataset(root_dir, tfm, self.bpe, self.target_dict)        
         elif self.args.data_type == 'Receipt53K':
-            gt_path = os.path.join(self.data_dir, 'gt_{}.txt'.format(split))            
+            # gt_path = os.path.join(self.data_dir, 'gt_{}.txt'.format(split)) 
+            gt_path = os.path.join(self.data_dir, f'gt_{split}.txt')
+                       
             self.datasets[split] = Receipt53KDataset(gt_path, tfm, self.bpe, self.target_dict)
         elif self.args.data_type == 'STR':
-            gt_path = os.path.join(self.data_dir, 'gt_{}.txt'.format(split))            
+            gt_path = os.path.join(self.data_dir, f'gt_{split}.txt')            
             self.datasets[split] = SyntheticTextRecognitionDataset(gt_path, tfm, self.bpe, self.target_dict)
         else:
-            raise Exception('Not defined dataset type: ' + self.args.data_type)
+            raise Exception(f'Not defined dataset type: {self.args.data_type}')
     
     @property
     def source_dictionary(self):
